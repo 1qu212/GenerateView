@@ -1,0 +1,38 @@
+<idea-plugin>
+  <id>cn.xydzjnq.generateview</id>
+  <name>GenerateView</name>
+  <version>1.0</version>
+  <vendor email="2431098657@qq.com" url="https://github.com/1qu212/GenerateView">xydzjnq</vendor>
+
+  <description><![CDATA[
+      根据xml文件生成view<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      根据xml文件生成view<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="GenerateViewId" class="cn.xydzjnq.generateview.GenerateViewAction" text="generate view">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+  </actions>
+
+</idea-plugin>
