@@ -62,6 +62,10 @@ public class PsiFileUtils {
                         return;
                     }
                     String type = tag.getName();
+                    if (type.contains(".")) {
+                        String[] strings = type.split(".");
+                        type = strings[strings.length - 1];
+                    }
                     String value = attribute.getValue();
                     if (value.contains("@+id/")) {
                         value = value.substring(5);
