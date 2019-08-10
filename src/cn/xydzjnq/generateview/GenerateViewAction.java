@@ -1,21 +1,18 @@
 package cn.xydzjnq.generateview;
 
 import cn.xydzjnq.generateview.util.JBPopupUtils;
+import cn.xydzjnq.generateview.util.PsiFileUtils;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.EverythingGlobalScope;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 public class GenerateViewAction extends AnAction {
 
@@ -28,14 +25,11 @@ public class GenerateViewAction extends AnAction {
         PsiElement psiElement = psiFile.findElementAt(caretModel.getOffset());
         if (psiElement != null && psiElement.getParent().getText().contains("R.layout.")) {
             String name = String.format("%s.xml", psiElement.getText());
-            Module module = ModuleUtil.findModuleForPsiElement(psiElement);
-            GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
-            PsiFile[] psiFiles = FilenameIndex.getFilesByName(project, name, scope);
-            if (psiFiles.length == 0) {
-                psiFiles = FilenameIndex.getFilesByName(project, name, new EverythingGlobalScope(project));
-            }
+            PsiFile[] psiFiles = PsiFileUtils.getPsiFiles(psiElement, name);
             if (psiFiles.length != 0) {
                 PsiFile xmlPsiFile = psiFiles[0];
+                ArrayList<Element> elementList = new ArrayList<>();
+                PsiFileUtils.parseElements(xmlPsiFile, elementList);
                 JDialog jDialog = new JDialog();
                 jDialog.setTitle("Generate View");
                 jDialog.pack();
