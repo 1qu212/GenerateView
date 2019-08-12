@@ -1,11 +1,13 @@
 package cn.xydzjnq.generateview;
 
+import com.intellij.psi.PsiClass;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
 public class TemplateDialog extends JDialog {
-    public TemplateDialog(ArrayList<Element> elementList) {
+    public TemplateDialog(PsiClass psiClass, ArrayList<Element> elementList) {
         setSize(new Dimension(640, 360));
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension screenSize = toolkit.getScreenSize();
@@ -35,6 +37,7 @@ public class TemplateDialog extends JDialog {
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
+        new InjectWriter(psiClass, elementList).execute();
     }
 
     public void add(JPanel jPanel, Component component, GridBagConstraints gridBagConstraints, int gridx, int gridy, int weightx, int weighty) {
