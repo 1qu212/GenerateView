@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
-import javax.swing.*;
 import java.util.ArrayList;
 
 public class GenerateViewAction extends AnAction {
@@ -30,11 +29,7 @@ public class GenerateViewAction extends AnAction {
                 PsiFile xmlPsiFile = psiFiles[0];
                 ArrayList<Element> elementList = new ArrayList<>();
                 PsiFileUtils.parseElements(xmlPsiFile, elementList);
-                JDialog jDialog = new JDialog();
-                jDialog.setTitle("Generate View");
-                jDialog.pack();
-                jDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-                jDialog.setVisible(true);
+                new TemplateDialog(elementList);
             } else {
                 JBPopupUtils.showError(project, "没有找到对应的xml文件");
             }
