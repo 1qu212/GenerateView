@@ -40,7 +40,7 @@ public class GenerateViewAction extends BaseGenerateAction {
                 PsiFile xmlPsiFile = psiFiles[0];
                 ArrayList<Element> elementList = new ArrayList<>();
                 PsiFileUtils.parseElements(xmlPsiFile, elementList);
-                new TemplateDialog(psiClass, elementList);
+                new TemplateDialog(psiFile, psiClass, elementList);
             } else {
                 JBPopupUtils.showError(project, "没有找到对应的xml文件");
             }
