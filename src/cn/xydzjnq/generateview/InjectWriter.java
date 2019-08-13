@@ -44,7 +44,7 @@ public class InjectWriter extends WriteCommandAction {
             String field = "private " + element.getType() + " " + element.getName() + ";";
             PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
             psiClass.add(psiField);
-            String methodLine = element.getName() + " = findViewById(R.id." + element.getName() + ");";
+            String methodLine = element.getName() + " = (" + element.getType() + ")findViewById(R.id." + element.getId() + ");";
             PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiClass);
             psiMethod.getBody().add(psiStatement);
         }

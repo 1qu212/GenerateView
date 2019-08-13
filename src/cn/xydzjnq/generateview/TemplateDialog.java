@@ -4,6 +4,8 @@ import com.intellij.psi.PsiClass;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class TemplateDialog extends JDialog {
@@ -25,19 +27,45 @@ public class TemplateDialog extends JDialog {
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.anchor = GridBagConstraints.WEST;
+        ArrayList<JTextField> jTextFieldArrayList = new ArrayList<>();
         for (int i = 0; i < elementList.size(); i++) {
             JLabel jLabel = new JLabel(elementList.get(i).getType());
             JTextField jTextField = new JTextField(elementList.get(i).getName());
+            jTextFieldArrayList.add(jTextField);
             add(jPanel, jLabel, gridBagConstraints, 0, i, 1, 1);
             add(jPanel, jTextField, gridBagConstraints, 1, i, 3, 1);
         }
         box.add(jPanel);
         container.add(box, BorderLayout.CENTER);
+        JPanel buttonJPanel = new JPanel();
+        JButton confirmJButton = new JButton("OK");
+        JButton cancelJButton = new JButton("Cancel");
+        buttonJPanel.add(confirmJButton);
+        buttonJPanel.add(cancelJButton);
         add(new JScrollPane(container));
+        add(buttonJPanel, BorderLayout.SOUTH);
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
-        new InjectWriter(psiClass, elementList).execute();
+        confirmJButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ArrayList<Element> elementArrayList = new ArrayList<>();
+                for (int i = 0; i < elementList.size(); i++) {
+                    Element modifiedElement = new Element(elementList.get(i));
+                    modifiedElement.setName(jTextFieldArrayList.get(i).getText());
+                    elementArrayList.add(modifiedElement);
+                }
+                new InjectWriter(psiClass, elementArrayList).execute();
+                TemplateDialog.this.dispose();
+            }
+        });
+        cancelJButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                TemplateDialog.this.dispose();
+            }
+        });
     }
 
     public void add(JPanel jPanel, Component component, GridBagConstraints gridBagConstraints, int gridx, int gridy, int weightx, int weighty) {
