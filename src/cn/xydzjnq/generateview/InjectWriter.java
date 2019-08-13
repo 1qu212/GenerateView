@@ -1,5 +1,6 @@
 package cn.xydzjnq.generateview;
 
+import cn.xydzjnq.generateview.util.PathUtils;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -41,17 +42,19 @@ public class InjectWriter extends WriteCommandAction {
                 if (statement.getFirstChild() instanceof PsiMethodCallExpression) {
                     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) statement.getFirstChild()).getMethodExpression();
                     if (methodExpression.getText().equals("setContentView")) {
-                        onCreate.getBody().addAfter(psiElementFactory.createStatementFromText("findViews();", psiClass), statement);
+                        onCreate.getBody().addAfter(psiElementFactory.createStatementFromText("initView();", psiClass), statement);
                         break;
                     }
                 }
             }
         }
-        PsiMethod psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void findViews() {}", psiClass));
+        PsiMethod psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initView() {}", psiClass));
         for (Element element : elementList) {
             String field = null;
             if (element.getType().contains(".")) {
                 field = "private " + element.getType() + " " + element.getName() + ";";
+            } else if (PathUtils.viewPaths.containsKey(element.getType())) {
+                field = PathUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
             } else {
                 field = "private android.widget." + element.getType() + " " + element.getName() + ";";
             }

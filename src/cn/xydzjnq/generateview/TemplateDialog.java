@@ -30,7 +30,7 @@ public class TemplateDialog extends JDialog {
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         ArrayList<JTextField> jTextFieldArrayList = new ArrayList<>();
         for (int i = 0; i < elementList.size(); i++) {
-            JLabel jLabel = new JLabel(elementList.get(i).getType());
+            JLabel jLabel = new JLabel(elementList.get(i).getShortType());
             JTextField jTextField = new JTextField(elementList.get(i).getName());
             jTextFieldArrayList.add(jTextField);
             add(jPanel, jLabel, gridBagConstraints, 0, i, 1, 1);
