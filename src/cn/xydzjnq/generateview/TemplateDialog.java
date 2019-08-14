@@ -1,6 +1,7 @@
 package cn.xydzjnq.generateview;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
@@ -10,7 +11,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class TemplateDialog extends JDialog {
-    public TemplateDialog(PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList) {
+    public TemplateDialog(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList) {
         setSize(new Dimension(640, 360));
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension screenSize = toolkit.getScreenSize();
@@ -57,7 +58,7 @@ public class TemplateDialog extends JDialog {
                     modifiedElement.setName(jTextFieldArrayList.get(i).getText());
                     elementArrayList.add(modifiedElement);
                 }
-                new InjectWriter(psiFile, psiClass, elementArrayList).execute();
+                new InjectWriter(psiElement, psiFile, psiClass, elementArrayList).execute();
                 TemplateDialog.this.dispose();
             }
         });
