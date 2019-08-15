@@ -1,13 +1,12 @@
 package cn.xydzjnq.generateview;
 
-import cn.xydzjnq.generateview.util.PathUtils;
+import cn.xydzjnq.generateview.util.ClassTypeUtils;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,19 +41,22 @@ public class InjectWriter extends WriteCommandAction {
     }
 
     private void wirteFindView() {
-        PsiClass activityClass = JavaPsiFacade.getInstance(project).findClass("android.app.Activity", GlobalSearchScope.allScope(project));
-        PsiClass fragmentClass = JavaPsiFacade.getInstance(project).findClass("android.app.Fragment", GlobalSearchScope.allScope(project));
-        PsiClass supportFragmentClass = JavaPsiFacade.getInstance(project).findClass("android.support.v4.app.Fragment", GlobalSearchScope.allScope(project));
-        PsiClass androidxFragmentClass = JavaPsiFacade.getInstance(project).findClass("androidx.fragment.app.Fragment", GlobalSearchScope.allScope(project));
-        if (activityClass != null && psiClass.isInheritor(activityClass, true)) {
-            generateActivityViews();
-        } else if ((fragmentClass != null && psiClass.isInheritor(fragmentClass, true))
-                || (supportFragmentClass != null && psiClass.isInheritor(supportFragmentClass, true))
-                || (androidxFragmentClass != null && psiClass.isInheritor(androidxFragmentClass, true))) {
-            generateFragmentViews();
-        } else {
-            generateViews();
+        PsiReferenceList psiReferenceList = psiClass.getExtendsList();
+        if (psiReferenceList != null) {
+            for (PsiJavaCodeReferenceElement element : psiReferenceList.getReferenceElements()) {
+                if (ClassTypeUtils.activitys.contains(element.getQualifiedName())) {
+                    generateActivityViews();
+                    return;
+                } else if (ClassTypeUtils.fragments.contains(element.getQualifiedName())) {
+                    generateFragmentViews();
+                    return;
+                } else if (ClassTypeUtils.adapters.contains(element.getQualifiedName())) {
+                    generateViewHolder();
+                    return;
+                }
+            }
         }
+        generateViews();
     }
 
     private void generateActivityViews() {
@@ -131,8 +133,8 @@ public class InjectWriter extends WriteCommandAction {
                     String field = null;
                     if (element.getType().contains(".")) {
                         field = "private " + element.getType() + " " + element.getName() + ";";
-                    } else if (PathUtils.viewPaths.containsKey(element.getType())) {
-                        field = PathUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+                    } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                        field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
                     } else {
                         field = "private android.widget." + element.getType() + " " + element.getName() + ";";
                     }
@@ -151,8 +153,8 @@ public class InjectWriter extends WriteCommandAction {
                     String field = null;
                     if (element.getType().contains(".")) {
                         field = "private " + element.getType() + " " + element.getName() + ";";
-                    } else if (PathUtils.viewPaths.containsKey(element.getType())) {
-                        field = PathUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+                    } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                        field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
                     } else {
                         field = "private android.widget." + element.getType() + " " + element.getName() + ";";
                     }
@@ -164,6 +166,42 @@ public class InjectWriter extends WriteCommandAction {
                 }
             }
             break;
+        }
+    }
+
+    private void generateViewHolder() {
+        String psiClassName = psiClass.getName();
+        if (psiClassName.indexOf("Adapter") > -1) {
+            psiClassName = psiClassName.substring(0, psiClassName.indexOf("Adapter"));
+        }
+        String viewHolderName = psiClassName + "ViewHolder";
+        PsiClass viewHolder = psiElementFactory.createClass(viewHolderName);
+        PsiModifierList classModifierList = viewHolder.getModifierList();
+        if (classModifierList != null) {
+            classModifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+            classModifierList.setModifierProperty(PsiModifier.STATIC, true);
+        }
+        initView(viewHolder, viewHolderName);
+        psiClass.add(viewHolder);
+    }
+
+    private void initView(PsiClass psiClazz, String psiClassName) {
+        PsiMethod psiMethod = (PsiMethod) psiClazz.add(psiElementFactory.createMethodFromText("public "
+                + psiClassName + "(android.view.View itemView) {}", psiClazz));
+        for (Element element : elementList) {
+            String field = null;
+            if (element.getType().contains(".")) {
+                field = "private " + element.getType() + " " + element.getName() + ";";
+            } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+            } else {
+                field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+            }
+            PsiField psiField = psiElementFactory.createFieldFromText(field, psiClazz);
+            psiClazz.add(psiField);
+            String methodLine = element.getName() + " = itemView.findViewById(R.id." + element.getId() + ");";
+            PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiClazz);
+            psiMethod.getBody().add(psiStatement);
         }
     }
 
