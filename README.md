@@ -1,3 +1,9 @@
+# 如何使用该插件
+![Alt](screenshot/use_1.png)
+![Alt](screenshot/use_2.png)
+![Alt](screenshot/use_3.png)
+![Alt](screenshot/use_4.png)
+# 打开源码
 ## idea导入后如何配置
 ![Alt](screenshot/config_1.png)
 ![Alt](screenshot/config_2.png)
