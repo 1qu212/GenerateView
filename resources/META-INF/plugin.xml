@@ -5,15 +5,17 @@
     <vendor email="2431098657@qq.com" url="https://github.com/1qu212/GenerateView">xydzjnq</vendor>
 
     <description><![CDATA[
-      根据xml文件生成view<br>
-      <em>most HTML tags may be used</em>
+      Plugin for generating views injections from selected layout XMLs in activities/fragments/adapters.
     ]]></description>
 
     <change-notes><![CDATA[
-      根据xml文件生成view<br>
-      <em>most HTML tags may be used</em>
-    ]]>
-    </change-notes>
+<html>
+  <b>1.0</b> (08/15/2019)
+  <ul>
+    <li>Initial release</li>
+  </ul>
+</html>
+    ]]></change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
     <idea-version since-build="173.0"/>
