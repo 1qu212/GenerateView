@@ -52,6 +52,7 @@ public class TemplateDialog extends JDialog {
         confirmJButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                TemplateDialog.this.dispose();
                 ArrayList<Element> elementArrayList = new ArrayList<>();
                 for (int i = 0; i < elementList.size(); i++) {
                     Element modifiedElement = new Element(elementList.get(i));
@@ -59,7 +60,6 @@ public class TemplateDialog extends JDialog {
                     elementArrayList.add(modifiedElement);
                 }
                 new InjectWriter(psiElement, psiFile, psiClass, elementArrayList).execute();
-                TemplateDialog.this.dispose();
             }
         });
         cancelJButton.addActionListener(new ActionListener() {

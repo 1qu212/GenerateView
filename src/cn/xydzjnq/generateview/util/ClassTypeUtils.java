@@ -7,6 +7,7 @@ public class ClassTypeUtils {
     public static final HashMap<String, String> viewPaths = new HashMap<>();
     public static final ArrayList<String> activitys = new ArrayList<>();
     public static final ArrayList<String> fragments = new ArrayList<>();
+    public static final ArrayList<String> recycleViewAdapters = new ArrayList<>();
     public static final ArrayList<String> adapters = new ArrayList<>();
 
     static {
@@ -25,11 +26,13 @@ public class ClassTypeUtils {
         fragments.add("android.support.v4.app.Fragment");
         fragments.add("androidx.fragment.app.Fragment");
 
+        //recycleViewAdapters
+        recycleViewAdapters.add("android.support.v7.recyclerview.extensions.ListAdapter");
+        recycleViewAdapters.add("androidx.recyclerview.widget.ListAdapter");
+        recycleViewAdapters.add("android.support.v7.widget.RecyclerView.Adapter");
+        recycleViewAdapters.add("androidx.recyclerview.widget.RecyclerView.Adapter");
+
         //adapters
-        adapters.add("android.support.v7.recyclerview.extensions.ListAdapter");
-        adapters.add("androidx.recyclerview.widget.ListAdapter");
-        adapters.add("android.support.v7.widget.RecyclerView.Adapter");
-        adapters.add("androidx.recyclerview.widget.RecyclerView.Adapter");
         adapters.add("android.widget.BaseAdapter");
         adapters.add("android.widget.BaseExpandableListAdapter");
         adapters.add("android.widget.CursorAdapter");

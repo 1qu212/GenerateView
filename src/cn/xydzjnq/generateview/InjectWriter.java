@@ -50,8 +50,11 @@ public class InjectWriter extends WriteCommandAction {
                 } else if (ClassTypeUtils.fragments.contains(element.getQualifiedName())) {
                     generateFragmentViews();
                     return;
+                } else if (ClassTypeUtils.recycleViewAdapters.contains(element.getQualifiedName())) {
+                    generateViewHolder(true);
+                    return;
                 } else if (ClassTypeUtils.adapters.contains(element.getQualifiedName())) {
-                    generateViewHolder();
+                    generateViewHolder(false);
                     return;
                 }
             }
@@ -169,7 +172,7 @@ public class InjectWriter extends WriteCommandAction {
         }
     }
 
-    private void generateViewHolder() {
+    private void generateViewHolder(boolean isRecycleViewHolder) {
         String psiClassName = psiClass.getName();
         if (psiClassName.indexOf("Adapter") > -1) {
             psiClassName = psiClassName.substring(0, psiClassName.indexOf("Adapter"));
@@ -181,13 +184,15 @@ public class InjectWriter extends WriteCommandAction {
             classModifierList.setModifierProperty(PsiModifier.PUBLIC, true);
             classModifierList.setModifierProperty(PsiModifier.STATIC, true);
         }
-        initView(viewHolder, viewHolderName);
-        psiClass.add(viewHolder);
-    }
+        if (isRecycleViewHolder) {
 
-    private void initView(PsiClass psiClazz, String psiClassName) {
-        PsiMethod psiMethod = (PsiMethod) psiClazz.add(psiElementFactory.createMethodFromText("public "
-                + psiClassName + "(android.view.View itemView) {}", psiClazz));
+        }
+        PsiMethod psiMethod = (PsiMethod) viewHolder.add(psiElementFactory.createMethodFromText("public "
+                + psiClassName + "(android.view.View itemView) {}", viewHolder));
+        if (isRecycleViewHolder) {
+            PsiStatement psiStatement = psiElementFactory.createStatementFromText("super(itemView);", viewHolder);
+            psiMethod.getBody().add(psiStatement);
+        }
         for (Element element : elementList) {
             String field = null;
             if (element.getType().contains(".")) {
@@ -197,12 +202,13 @@ public class InjectWriter extends WriteCommandAction {
             } else {
                 field = "private android.widget." + element.getType() + " " + element.getName() + ";";
             }
-            PsiField psiField = psiElementFactory.createFieldFromText(field, psiClazz);
-            psiClazz.add(psiField);
+            PsiField psiField = psiElementFactory.createFieldFromText(field, viewHolder);
+            viewHolder.add(psiField);
             String methodLine = element.getName() + " = itemView.findViewById(R.id." + element.getId() + ");";
-            PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiClazz);
+            PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, viewHolder);
             psiMethod.getBody().add(psiStatement);
         }
+        psiClass.add(viewHolder);
     }
 
     private void importPackage() {
