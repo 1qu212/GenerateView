@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>cn.xydzjnq.generateview</id>
     <name>GenerateView</name>
-    <version>1.0</version>
+    <version>1.1</version>
     <vendor email="2431098657@qq.com" url="https://github.com/1qu212/GenerateView">xydzjnq</vendor>
 
     <description><![CDATA[
@@ -10,6 +10,10 @@
 
     <change-notes><![CDATA[
 <html>
+  <b>1.1</b> (08/16/2019)
+  <ul>
+    <li>create RecyclerView.ViewHolder</li>
+  </ul>
   <b>1.0</b> (08/15/2019)
   <ul>
     <li>Initial release</li>

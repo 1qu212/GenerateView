@@ -23,6 +23,7 @@ public class InjectWriter extends WriteCommandAction {
     private static final int SETCONTENTVIEW = 2;
     private static final int INFLATE = 3;
     private int initViewType = 2;
+    private int offset;
 
     public InjectWriter(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList) {
         super(psiClass.getProject(), psiFile);
@@ -185,7 +186,11 @@ public class InjectWriter extends WriteCommandAction {
             classModifierList.setModifierProperty(PsiModifier.STATIC, true);
         }
         if (isRecycleViewHolder) {
-
+            offset = viewHolder.getTextOffset();
+            PsiElement psiElement = viewHolder.findElementAt(offset + 3);
+            PsiKeyword psiKeyword = (PsiKeyword) viewHolder.addAfter(psiElementFactory.createKeyword("extends"), psiElement);
+            PsiStatement psiStatement = psiElementFactory.createStatementFromText("RecyclerView.ViewHolder", viewHolder);
+            viewHolder.addAfter(psiStatement, psiKeyword);
         }
         PsiMethod psiMethod = (PsiMethod) viewHolder.add(psiElementFactory.createMethodFromText("public "
                 + psiClassName + "(android.view.View itemView) {}", viewHolder));
