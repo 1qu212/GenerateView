@@ -10,6 +10,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class InjectWriter extends WriteCommandAction {
     Project project;
@@ -132,41 +134,73 @@ public class InjectWriter extends WriteCommandAction {
         switch (initViewType) {
             case ACTIVITY:
             case SETCONTENTVIEW: {
-                PsiMethod psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initView() {}", psiClass));
-                for (Element element : elementList) {
-                    String field = null;
-                    if (element.getType().contains(".")) {
-                        field = "private " + element.getType() + " " + element.getName() + ";";
-                    } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
-                        field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
-                    } else {
-                        field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+                PsiMethod[] psiMethods = psiClass.getAllMethods();
+                PsiMethod psiMethod = null;
+                for (PsiMethod method : psiMethods) {
+                    if ("initView".equals(method.getName())) {
+                        psiMethod = method;
+                        break;
                     }
-                    PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
-                    psiClass.add(psiField);
+                }
+                if (psiMethod == null) {
+                    psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initView() {}", psiClass));
+                }
+                List<String> statementTextList = new ArrayList<>();
+                for (PsiStatement statement : psiMethod.getBody().getStatements()) {
+                    statementTextList.add(statement.getText());
+                }
+                for (Element element : elementList) {
                     String methodLine = element.getName() + " = findViewById(R.id." + element.getId() + ");";
-                    PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiClass);
-                    psiMethod.getBody().add(psiStatement);
+                    PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiMethod);
+                    if (!statementTextList.contains(psiStatement.getText())) {
+                        psiMethod.getBody().add(psiStatement);
+                        String field = null;
+                        if (element.getType().contains(".")) {
+                            field = "private " + element.getType() + " " + element.getName() + ";";
+                        } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                            field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+                        } else {
+                            field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+                        }
+                        PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
+                        psiClass.add(psiField);
+                    }
                 }
             }
             break;
             case FRAGMENT:
             case INFLATE: {
-                PsiMethod psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initView(android.view.View view) {}", psiClass));
-                for (Element element : elementList) {
-                    String field = null;
-                    if (element.getType().contains(".")) {
-                        field = "private " + element.getType() + " " + element.getName() + ";";
-                    } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
-                        field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
-                    } else {
-                        field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+                PsiMethod[] psiMethods = psiClass.getAllMethods();
+                PsiMethod psiMethod = null;
+                for (PsiMethod method : psiMethods) {
+                    if ("initView".equals(method.getName())) {
+                        psiMethod = method;
+                        break;
                     }
-                    PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
-                    psiClass.add(psiField);
+                }
+                if (psiMethod == null) {
+                    psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initView(android.view.View view) {}", psiClass));
+                }
+                List<String> statementTextList = new ArrayList<>();
+                for (PsiStatement statement : psiMethod.getBody().getStatements()) {
+                    statementTextList.add(statement.getText());
+                }
+                for (Element element : elementList) {
                     String methodLine = element.getName() + " = view.findViewById(R.id." + element.getId() + ");";
-                    PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiClass);
-                    psiMethod.getBody().add(psiStatement);
+                    PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiMethod);
+                    if (!statementTextList.contains(psiStatement.getText())) {
+                        psiMethod.getBody().add(psiStatement);
+                        String field = null;
+                        if (element.getType().contains(".")) {
+                            field = "private " + element.getType() + " " + element.getName() + ";";
+                        } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                            field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+                        } else {
+                            field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+                        }
+                        PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
+                        psiClass.add(psiField);
+                    }
                 }
             }
             break;
@@ -179,41 +213,71 @@ public class InjectWriter extends WriteCommandAction {
             psiClassName = psiClassName.substring(0, psiClassName.indexOf("Adapter"));
         }
         String viewHolderName = psiClassName + "ViewHolder";
-        PsiClass viewHolder = psiElementFactory.createClass(viewHolderName);
-        PsiModifierList classModifierList = viewHolder.getModifierList();
-        if (classModifierList != null) {
-            classModifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-            classModifierList.setModifierProperty(PsiModifier.STATIC, true);
+        PsiClass[] psiClasses = psiClass.getAllInnerClasses();
+        PsiClass viewHolder = null;
+        PsiMethod psiMethod = null;
+        for (PsiClass clazz : psiClasses) {
+            if (viewHolderName.equals(clazz.getName())) {
+                viewHolder = clazz;
+                PsiMethod[] psiMethods = viewHolder.getAllMethods();
+                for (PsiMethod method : psiMethods) {
+                    if (viewHolderName.equals(method.getName())) {
+                        psiMethod = method;
+                        break;
+                    }
+                }
+                break;
+            }
         }
-        if (isRecycleViewHolder) {
-            offset = viewHolder.getTextOffset();
-            PsiElement psiElement = viewHolder.findElementAt(offset + 3);
-            PsiKeyword psiKeyword = (PsiKeyword) viewHolder.addAfter(psiElementFactory.createKeyword("extends"), psiElement);
-            PsiStatement psiStatement = psiElementFactory.createStatementFromText("RecyclerView.ViewHolder", viewHolder);
-            viewHolder.addAfter(psiStatement, psiKeyword);
+        if (viewHolder == null) {
+            viewHolder = psiElementFactory.createClass(viewHolderName);
+            PsiModifierList classModifierList = viewHolder.getModifierList();
+            if (classModifierList != null) {
+                classModifierList.setModifierProperty(PsiModifier.PUBLIC, true);
+                classModifierList.setModifierProperty(PsiModifier.STATIC, true);
+            }
+            if (isRecycleViewHolder) {
+                offset = viewHolder.getTextOffset();
+                PsiElement psiElement = viewHolder.findElementAt(offset + 3);
+                PsiKeyword psiKeyword = (PsiKeyword) viewHolder.addAfter(psiElementFactory.createKeyword("extends"), psiElement);
+                PsiStatement psiStatement = psiElementFactory.createStatementFromText("RecyclerView.ViewHolder", viewHolder);
+                viewHolder.addAfter(psiStatement, psiKeyword);
+            }
+            psiMethod = (PsiMethod) viewHolder.add(psiElementFactory.createMethodFromText("public "
+                    + viewHolderName + "(android.view.View itemView) {}", viewHolder));
+            if (isRecycleViewHolder) {
+                PsiStatement psiStatement = psiElementFactory.createStatementFromText("super(itemView);", viewHolder);
+                psiMethod.getBody().add(psiStatement);
+            }
+            initView(viewHolder, psiMethod);
+            psiClass.add(viewHolder);
+        } else {
+            initView(viewHolder, psiMethod);
         }
-        PsiMethod psiMethod = (PsiMethod) viewHolder.add(psiElementFactory.createMethodFromText("public "
-                + psiClassName + "(android.view.View itemView) {}", viewHolder));
-        if (isRecycleViewHolder) {
-            PsiStatement psiStatement = psiElementFactory.createStatementFromText("super(itemView);", viewHolder);
-            psiMethod.getBody().add(psiStatement);
+    }
+
+    private void initView(PsiClass viewHolder, PsiMethod psiMethod) {
+        List<String> statementTextList = new ArrayList<>();
+        for (PsiStatement statement : psiMethod.getBody().getStatements()) {
+            statementTextList.add(statement.getText());
         }
         for (Element element : elementList) {
-            String field = null;
-            if (element.getType().contains(".")) {
-                field = "private " + element.getType() + " " + element.getName() + ";";
-            } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
-                field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
-            } else {
-                field = "private android.widget." + element.getType() + " " + element.getName() + ";";
-            }
-            PsiField psiField = psiElementFactory.createFieldFromText(field, viewHolder);
-            viewHolder.add(psiField);
             String methodLine = element.getName() + " = itemView.findViewById(R.id." + element.getId() + ");";
             PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, viewHolder);
-            psiMethod.getBody().add(psiStatement);
+            if (!statementTextList.contains(psiStatement.getText())) {
+                psiMethod.getBody().add(psiStatement);
+                String field = null;
+                if (element.getType().contains(".")) {
+                    field = "private " + element.getType() + " " + element.getName() + ";";
+                } else if (ClassTypeUtils.viewPaths.containsKey(element.getType())) {
+                    field = ClassTypeUtils.viewPaths.get(element.getType()) + " " + element.getName() + ";";
+                } else {
+                    field = "private android.widget." + element.getType() + " " + element.getName() + ";";
+                }
+                PsiField psiField = psiElementFactory.createFieldFromText(field, viewHolder);
+                viewHolder.add(psiField);
+            }
         }
-        psiClass.add(viewHolder);
     }
 
     private void importPackage() {
