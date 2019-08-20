@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class InjectWriter extends WriteCommandAction {
@@ -19,6 +18,7 @@ public class InjectWriter extends WriteCommandAction {
     PsiFile psiFile;
     PsiClass psiClass;
     ArrayList<Element> elementList;
+    String viewHolderName;
     PsiElementFactory psiElementFactory;
     private static final int ACTIVITY = 0;
     private static final int FRAGMENT = 1;
@@ -27,13 +27,14 @@ public class InjectWriter extends WriteCommandAction {
     private int initViewType = 2;
     private int offset;
 
-    public InjectWriter(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList) {
+    public InjectWriter(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList, String viewHolderName) {
         super(psiClass.getProject(), psiFile);
         project = psiClass.getProject();
         this.psiElement = psiElement;
         this.psiFile = psiFile;
         this.psiClass = psiClass;
         this.elementList = elementList;
+        this.viewHolderName = viewHolderName;
         psiElementFactory = JavaPsiFacade.getElementFactory(project);
     }
 
@@ -208,11 +209,6 @@ public class InjectWriter extends WriteCommandAction {
     }
 
     private void generateViewHolder(boolean isRecycleViewHolder) {
-        String psiClassName = psiClass.getName();
-        if (psiClassName.indexOf("Adapter") > -1) {
-            psiClassName = psiClassName.substring(0, psiClassName.indexOf("Adapter"));
-        }
-        String viewHolderName = psiClassName + "ViewHolder";
         PsiClass[] psiClasses = psiClass.getAllInnerClasses();
         PsiClass viewHolder = null;
         PsiMethod psiMethod = null;

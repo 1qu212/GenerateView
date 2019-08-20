@@ -1,8 +1,7 @@
 package cn.xydzjnq.generateview;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import cn.xydzjnq.generateview.util.ClassTypeUtils;
+import com.intellij.psi.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +10,10 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class TemplateDialog extends JDialog {
+
+    private String viewHolderName;
+    private JTextField holderTextField;
+
     public TemplateDialog(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList) {
         setSize(new Dimension(640, 360));
         Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -45,13 +48,48 @@ public class TemplateDialog extends JDialog {
         buttonJPanel.add(confirmJButton);
         buttonJPanel.add(cancelJButton);
         add(new JScrollPane(container));
-        add(buttonJPanel, BorderLayout.SOUTH);
+        Box vBox = Box.createVerticalBox();
+        boolean hasViewHolder = false;
+        PsiReferenceList psiReferenceList = psiClass.getExtendsList();
+        if (psiReferenceList != null) {
+            for (PsiJavaCodeReferenceElement element : psiReferenceList.getReferenceElements()) {
+                if (ClassTypeUtils.recycleViewAdapters.contains(element.getQualifiedName())) {
+                    hasViewHolder = true;
+                } else if (ClassTypeUtils.adapters.contains(element.getQualifiedName())) {
+                    hasViewHolder = true;
+                }
+            }
+        }
+        if (hasViewHolder) {
+            String psiClassName = psiClass.getName();
+            if (psiClassName.indexOf("Adapter") > -1) {
+                psiClassName = psiClassName.substring(0, psiClassName.indexOf("Adapter"));
+            }
+            viewHolderName = psiClassName + "ViewHolder";
+            JLabel jLabel = new JLabel("ViewHolder名");
+            holderTextField = new JTextField(viewHolderName);
+            Box viewHolderPanel = Box.createHorizontalBox();
+            viewHolderPanel.add(Box.createHorizontalStrut(10));
+            viewHolderPanel.add(jLabel);
+            viewHolderPanel.add(Box.createHorizontalStrut(20));
+            viewHolderPanel.add(holderTextField);
+            viewHolderPanel.add(Box.createHorizontalStrut(10));
+            vBox.add(viewHolderPanel);
+            vBox.add(buttonJPanel);
+        } else {
+            vBox.add(buttonJPanel);
+        }
+        add(vBox, BorderLayout.SOUTH);
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
         confirmJButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                String holderName = null;
+                if (viewHolderName != null) {
+                    holderName = holderTextField.getText().toString().trim();
+                }
                 TemplateDialog.this.dispose();
                 ArrayList<Element> elementArrayList = new ArrayList<>();
                 for (int i = 0; i < elementList.size(); i++) {
@@ -59,7 +97,7 @@ public class TemplateDialog extends JDialog {
                     modifiedElement.setName(jTextFieldArrayList.get(i).getText());
                     elementArrayList.add(modifiedElement);
                 }
-                new InjectWriter(psiElement, psiFile, psiClass, elementArrayList).execute();
+                new InjectWriter(psiElement, psiFile, psiClass, elementArrayList, holderName).execute();
             }
         });
         cancelJButton.addActionListener(new ActionListener() {
