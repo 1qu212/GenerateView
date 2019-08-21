@@ -9,6 +9,7 @@ public class ClassTypeUtils {
     public static final ArrayList<String> fragments = new ArrayList<>();
     public static final ArrayList<String> recycleViewAdapters = new ArrayList<>();
     public static final ArrayList<String> adapters = new ArrayList<>();
+    public static final ArrayList<String> clickInterfaces = new ArrayList<>();
 
     static {
         //view的默认包名是android.weight
@@ -20,6 +21,8 @@ public class ClassTypeUtils {
 
         //activitys
         activitys.add("android.app.Activity");
+        activitys.add("android.support.v7.app.AppCompatActivity");
+        activitys.add("androidx.appcompat.app.AppCompatActivity");
 
         //fragments
         fragments.add("android.app.Fragment");
@@ -38,5 +41,8 @@ public class ClassTypeUtils {
         adapters.add("android.widget.CursorAdapter");
         adapters.add("android.support.v4.widget.CursorAdapter");
         adapters.add("androidx.cursoradapter.widget.CursorAdapter");
+
+        //clickInterfaces
+        clickInterfaces.add("android.view.View.OnClickListener");
     }
 }

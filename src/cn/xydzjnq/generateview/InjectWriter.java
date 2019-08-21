@@ -19,6 +19,8 @@ public class InjectWriter extends WriteCommandAction {
     PsiClass psiClass;
     ArrayList<Element> elementList;
     String viewHolderName;
+    boolean onClick;
+    ArrayList<Element> clickElementList;
     PsiElementFactory psiElementFactory;
     private static final int ACTIVITY = 0;
     private static final int FRAGMENT = 1;
@@ -27,7 +29,8 @@ public class InjectWriter extends WriteCommandAction {
     private int initViewType = 2;
     private int offset;
 
-    public InjectWriter(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList, String viewHolderName) {
+    public InjectWriter(PsiElement psiElement, PsiFile psiFile, PsiClass psiClass, ArrayList<Element> elementList,
+                        String viewHolderName, boolean onClick, ArrayList<Element> clickElementList) {
         super(psiClass.getProject(), psiFile);
         project = psiClass.getProject();
         this.psiElement = psiElement;
@@ -35,12 +38,15 @@ public class InjectWriter extends WriteCommandAction {
         this.psiClass = psiClass;
         this.elementList = elementList;
         this.viewHolderName = viewHolderName;
+        this.onClick = onClick;
+        this.clickElementList = clickElementList;
         psiElementFactory = JavaPsiFacade.getElementFactory(project);
     }
 
     @Override
     protected void run(@NotNull Result result) throws Throwable {
         wirteFindView();
+        generateClicks();
         importPackage();
     }
 
@@ -70,12 +76,31 @@ public class InjectWriter extends WriteCommandAction {
         PsiMethod[] onCreates = psiClass.findMethodsByName("onCreate", false);
         if (onCreates != null && onCreates.length > 0) {
             PsiMethod onCreate = onCreates[0];
+            boolean hasInitView = false;
+            boolean hasInitListener = false;
+            for (PsiStatement statement : onCreate.getBody().getStatements()) {
+                if (statement.getFirstChild() instanceof PsiMethodCallExpression) {
+                    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) statement.getFirstChild()).getMethodExpression();
+                    if (methodExpression.getText().equals("initView")) {
+                        hasInitView = true;
+                    } else if (methodExpression.getText().equals("initListener")) {
+                        hasInitListener = true;
+                    }
+                }
+            }
             for (PsiStatement statement : onCreate.getBody().getStatements()) {
                 // 寻找setContentView语句
                 if (statement.getFirstChild() instanceof PsiMethodCallExpression) {
                     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) statement.getFirstChild()).getMethodExpression();
                     if (methodExpression.getText().equals("setContentView")) {
-                        onCreate.getBody().addAfter(psiElementFactory.createStatementFromText("initView();", psiClass), statement);
+                        if (shouldGenerateClicks() && !onClick && !hasInitListener) {
+                            PsiElement initListenerStatement = psiElementFactory.createStatementFromText("initListener();", psiClass);
+                            onCreate.getBody().addAfter(initListenerStatement, statement);
+                        }
+                        if (!hasInitView) {
+                            PsiElement initViewStatement = psiElementFactory.createStatementFromText("initView();", psiClass);
+                            onCreate.getBody().addAfter(initViewStatement, statement);
+                        }
                         break;
                     }
                 }
@@ -89,6 +114,15 @@ public class InjectWriter extends WriteCommandAction {
         PsiMethod[] onCreateViews = psiClass.findMethodsByName("onCreateView", false);
         if (onCreateViews != null && onCreateViews.length > 0) {
             PsiMethod onCreateView = onCreateViews[0];
+            boolean hasInitListener = false;
+            for (PsiStatement statement : onCreateView.getBody().getStatements()) {
+                if (statement.getFirstChild() instanceof PsiMethodCallExpression) {
+                    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression) statement.getFirstChild()).getMethodExpression();
+                    if (methodExpression.getText().equals("initListener")) {
+                        hasInitListener = true;
+                    }
+                }
+            }
             for (PsiStatement statement : onCreateView.getBody().getStatements()) {
                 // 寻找inflater.inflate语句
                 // 这里只判断了返回语句
@@ -100,6 +134,10 @@ public class InjectWriter extends WriteCommandAction {
                         onCreateView.getBody().addBefore(psiElementFactory.createStatementFromText("initView(view);",
                                 psiClass), statement);
                         statement.replace(psiElementFactory.createStatementFromText("return view;", psiClass));
+                    }
+                    if (shouldGenerateClicks() && !onClick && !hasInitListener) {
+                        PsiElement initListenerStatement = psiElementFactory.createStatementFromText("initListener();", psiClass);
+                        onCreateView.getBody().addBefore(initListenerStatement, statement);
                     }
                     break;
                 }
@@ -118,10 +156,19 @@ public class InjectWriter extends WriteCommandAction {
                     if (psiMethodCallExpression instanceof PsiMethodCallExpression) {
                         PsiReferenceExpression psiReferenceExpression = ((PsiMethodCallExpression) psiMethodCallExpression).getMethodExpression();
                         if (psiReferenceExpression.getLastChild().getText().equals("setContentView")) {
-                            parent.getParent().addAfter(psiElementFactory.createStatementFromText("initView();", psiClass), parent);
+                            if (shouldGenerateClicks() && !onClick) {
+                                PsiElement initListenerStatement = psiElementFactory.createStatementFromText("initListener();", psiClass);
+                                parent.getParent().addAfter(initListenerStatement, parent);
+                            }
+                            PsiElement initViewStatement = psiElementFactory.createStatementFromText("initView();", psiClass);
+                            parent.getParent().addAfter(initViewStatement, parent);
                             initViewType = SETCONTENTVIEW;
                             initView();
                         } else if (psiReferenceExpression.getLastChild().getText().equals("inflate")) {
+                            if (shouldGenerateClicks() && !onClick) {
+                                PsiElement initListenerStatement = psiElementFactory.createStatementFromText("initListener();", psiClass);
+                                parent.getParent().addAfter(initListenerStatement, parent);
+                            }
                             initViewType = INFLATE;
                             initView();
                         }
@@ -166,6 +213,11 @@ public class InjectWriter extends WriteCommandAction {
                         PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
                         psiClass.add(psiField);
                     }
+                    if (onClick && clickElementList.contains(element)) {
+                        String onClickStatement = element.getName() + ".setOnClickListener(this);";
+                        PsiStatement onClickPsiStatement = psiElementFactory.createStatementFromText(onClickStatement, psiMethod);
+                        psiMethod.getBody().add(onClickPsiStatement);
+                    }
                 }
             }
             break;
@@ -201,6 +253,11 @@ public class InjectWriter extends WriteCommandAction {
                         }
                         PsiField psiField = psiElementFactory.createFieldFromText(field, psiClass);
                         psiClass.add(psiField);
+                    }
+                    if (onClick && clickElementList.contains(element)) {
+                        String onClickStatement = element.getName() + ".setOnClickListener(this);";
+                        PsiStatement onClickPsiStatement = psiElementFactory.createStatementFromText(onClickStatement, psiMethod);
+                        psiMethod.getBody().add(onClickPsiStatement);
                     }
                 }
             }
@@ -272,6 +329,102 @@ public class InjectWriter extends WriteCommandAction {
                 }
                 PsiField psiField = psiElementFactory.createFieldFromText(field, viewHolder);
                 viewHolder.add(psiField);
+            }
+        }
+    }
+
+    private boolean shouldGenerateClicks() {
+        if (clickElementList.size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private void generateClicks() {
+        if (clickElementList.size() == 0) {
+            return;
+        }
+        if (onClick) {
+            boolean hasImpl = false;
+            boolean hasImplKeyword = false;
+            PsiReferenceList psiReferenceList = psiClass.getImplementsList();
+            if (psiReferenceList != null) {
+                for (PsiJavaCodeReferenceElement element : psiReferenceList.getReferenceElements()) {
+                    hasImplKeyword = true;
+                    if (ClassTypeUtils.clickInterfaces.contains(element.getQualifiedName())) {
+                        hasImpl = true;
+                    }
+                }
+            }
+            if (!hasImpl) {
+                PsiElement[] psiElements = psiClass.getChildren();
+                for (PsiElement p : psiElements) {
+                    if ("{".equals(p.getText())) {
+                        if (hasImplKeyword) {
+                            //TODO
+                            break;
+                        } else {
+                            psiClass.addBefore(psiElementFactory.createKeyword("implements"), p);
+                            PsiStatement psiStatement = psiElementFactory.createStatementFromText("android.view.View.OnClickListener", psiClass);
+                            psiClass.addBefore(psiStatement, p);
+                            break;
+                        }
+                    }
+                }
+            }
+            PsiMethod[] psiMethods = psiClass.getAllMethods();
+            PsiMethod psiMethod = null;
+            for (PsiMethod method : psiMethods) {
+                if ("onClick".equals(method.getName())) {
+                    psiMethod = method;
+                    break;
+                }
+            }
+            if (psiMethod == null) {
+                String methodString = "@Override\n" +
+                        "    public void onClick(android.view.View view) {\n" +
+                        "        switch (view.getId()) {\n";
+                for (Element element : clickElementList) {
+                    String caseLine = "case R.id." + element.getId() + ":\n";
+                    methodString += caseLine;
+                    String breakLine = "break;\n";
+                    methodString += breakLine;
+                }
+                methodString += "        }\n" +
+                        "    }";
+                psiClass.add(psiElementFactory.createMethodFromText(methodString, psiClass));
+            } else {
+                //TODO
+                for (Element element : clickElementList) {
+                    String caseLine = "case R.id." + element.getId() + ":\n";
+                    PsiStatement caseStatement = psiElementFactory.createStatementFromText(caseLine, psiMethod);
+                    psiMethod.getBody().add(caseStatement);
+                    String breakLine = "break;\n";
+                    PsiStatement breakStatement = psiElementFactory.createStatementFromText(breakLine, psiMethod);
+                    psiMethod.getBody().add(breakStatement);
+                }
+            }
+        } else {
+            PsiMethod[] psiMethods = psiClass.getAllMethods();
+            PsiMethod psiMethod = null;
+            for (PsiMethod method : psiMethods) {
+                if ("initListener".equals(method.getName())) {
+                    psiMethod = method;
+                    break;
+                }
+            }
+            if (psiMethod == null) {
+                psiMethod = (PsiMethod) psiClass.add(psiElementFactory.createMethodFromText("private void initListener() {}", psiClass));
+            }
+            for (Element element : clickElementList) {
+                String methodLine = element.getName() + ".setOnClickListener(new android.view.View.OnClickListener() {\n" +
+                        "            @Override\n" +
+                        "            public void onClick(View view) {\n" +
+                        "\n" +
+                        "            }\n" +
+                        "        });";
+                PsiStatement psiStatement = psiElementFactory.createStatementFromText(methodLine, psiMethod);
+                psiMethod.getBody().add(psiStatement);
             }
         }
     }
