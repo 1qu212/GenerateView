@@ -10,7 +10,10 @@
 
     <change-notes><![CDATA[
 <html>
-  <b>1.2</b> (08/20/2019)
+  <b>1.2</b> (08/21/2019)
+  <ul>
+    <li>Generate onClickListeners(生成onClickListeners代码)</li>
+  </ul>
   <ul>
     <li>Incremental update(支持增量创建view)</li>
   </ul>
