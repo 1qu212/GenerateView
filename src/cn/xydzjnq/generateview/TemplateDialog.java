@@ -2,6 +2,7 @@ package cn.xydzjnq.generateview;
 
 import cn.xydzjnq.generateview.util.ClassTypeUtils;
 import com.intellij.psi.*;
+import org.jdesktop.swingx.JXRadioGroup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,10 +47,25 @@ public class TemplateDialog extends JDialog {
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.anchor = GridBagConstraints.WEST;
+        JRadioButton jRadioButton0 = new JRadioButton("aaBbCc", true);
+        JRadioButton jRadioButton1 = new JRadioButton("mAaBbCc", false);
+        JRadioButton jRadioButton2 = new JRadioButton("aa_bb_cc", false);
+        ButtonGroup buttonGroup = new ButtonGroup();
+        buttonGroup.add(jRadioButton0);
+        buttonGroup.add(jRadioButton1);
+        buttonGroup.add(jRadioButton2);
         if (hasViewHolder) {
+            JPanel headPanel = new JPanel();
+            headPanel.add(Box.createHorizontalStrut(370));
+            headPanel.add(jRadioButton0);
+            headPanel.add(jRadioButton1);
+            headPanel.add(jRadioButton2);
+            add(headPanel, BorderLayout.NORTH);
             for (int i = 0; i < elementList.size(); i++) {
                 JLabel jLabel = new JLabel(elementList.get(i).getShortType());
                 JTextField jTextField = new JTextField(elementList.get(i).getName());
+                elementList.get(i).setjTextField(jTextField);
+                ElementType.getInstance().addElement(elementList.get(i));
                 jTextFieldArrayList.add(jTextField);
                 add(jPanel, jLabel, gridBagConstraints, 0, i, 1, 1);
                 add(jPanel, jTextField, gridBagConstraints, 1, i, 3, 1);
@@ -58,17 +74,40 @@ public class TemplateDialog extends JDialog {
             JPanel clickJPanel = new JPanel();
             JLabel clickLabel = new JLabel("click");
             clickJPanel.add(clickLabel, BorderLayout.WEST);
-            clickJPanel.add(Box.createHorizontalStrut(580));
+            clickJPanel.add(Box.createHorizontalStrut(350));
+            clickJPanel.add(jRadioButton0);
+            clickJPanel.add(jRadioButton1);
+            clickJPanel.add(jRadioButton2);
             add(clickJPanel, BorderLayout.NORTH);
             for (int i = 0; i < elementList.size(); i++) {
                 JCheckBox jCheckBox = new JCheckBox(elementList.get(i).getShortType());
                 jCheckBoxArrayList.add(jCheckBox);
                 JTextField jTextField = new JTextField(elementList.get(i).getName());
+                elementList.get(i).setjTextField(jTextField);
+                ElementType.getInstance().addElement(elementList.get(i));
                 jTextFieldArrayList.add(jTextField);
                 add(jPanel, jCheckBox, gridBagConstraints, 0, i, 1, 1);
                 add(jPanel, jTextField, gridBagConstraints, 1, i, 3, 1);
             }
         }
+        jRadioButton0.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ElementType.getInstance().setType(ElementType.TYPE0);
+            }
+        });
+        jRadioButton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ElementType.getInstance().setType(ElementType.TYPE1);
+            }
+        });
+        jRadioButton2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ElementType.getInstance().setType(ElementType.TYPE2);
+            }
+        });
         box.add(jPanel);
         container.add(box, BorderLayout.CENTER);
         JPanel buttonJPanel = new JPanel();

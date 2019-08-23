@@ -1,10 +1,14 @@
 package cn.xydzjnq.generateview;
 
+import javax.swing.*;
+
 public class Element {
     private String type;
     private String shortType;
     private String id;
     private String name;
+
+    private JTextField jTextField;
 
     public Element(Element element) {
         this.type = element.type;
@@ -17,7 +21,7 @@ public class Element {
         this.type = type;
         this.shortType = initShortType();
         this.id = id;
-        this.name = initName();
+        this.name = initName_0();
     }
 
     public String getType() {
@@ -62,7 +66,26 @@ public class Element {
         return type;
     }
 
-    private String initName() {
+    public void initName() {
+        switch (ElementType.getInstance().getType()) {
+            default:
+                name = initName_0();
+                break;
+            case ElementType.TYPE1:
+                name = initName_1();
+                break;
+            case ElementType.TYPE2:
+                name = initName_2();
+                break;
+        }
+        jTextField.setText(name);
+    }
+
+    public void setjTextField(JTextField jTextField) {
+        this.jTextField = jTextField;
+    }
+
+    private String initName_0() {
         String[] words = id.split("_");
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
@@ -73,5 +96,21 @@ public class Element {
             sb.append(chars);
         }
         return sb.toString();
+    }
+
+    private String initName_1() {
+        String[] words = id.split("_");
+        StringBuilder sb = new StringBuilder();
+        sb.append("m");
+        for (int i = 0; i < words.length; i++) {
+            char[] chars = words[i].toCharArray();
+            chars[0] = Character.toUpperCase(chars[0]);
+            sb.append(chars);
+        }
+        return sb.toString();
+    }
+
+    private String initName_2() {
+        return id;
     }
 }

@@ -12,6 +12,9 @@
 <html>
   <b>1.2</b> (08/21/2019)
   <ul>
+    <li>Richer weight's object name</li>
+  </ul>
+  <ul>
     <li>Generate onClickListeners(生成onClickListeners代码)</li>
   </ul>
   <ul>
