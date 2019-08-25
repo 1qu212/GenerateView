@@ -2,6 +2,9 @@
 ![Alt](screenshot/use_1.png)![Alt](screenshot/use_2.png)
 ![Alt](screenshot/use_3.png)![Alt](screenshot/use_4.png)
 ## 生成代码示例
+### 08/25/2019
+![Alt](screenshot/generate_multi_type_1.png)![Alt](screenshot/generate_multi_type_2.png)
+![Alt](screenshot/generate_multi_type_3.png)![Alt](screenshot/generate_multi_type_4.png)
 ### Activity
 ![Alt](screenshot/generate_activity_1.png)![Alt](screenshot/generate_activity_2.png)
 ![Alt](screenshot/generate_activity_3.png)![Alt](screenshot/generate_activity_4.png)
